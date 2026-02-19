@@ -74,9 +74,6 @@ certutil -setreg CA\ValidityPeriod "years"; `
 certutil -setreg CA\ValidityPeriodUnits 10; `
 <# enable Discrete Signature Algorithm (PKCS #1 V2.1) #> ; `
 certutil -setreg CA\CSP\DiscreteSignatureAlgorithm 1; `
-<# Enable SubjectAltName - FQDN for Computers, E-Mail for Users #> ; `
-certutil -setreg Policy\SubjectAltName ENABLED; `
-certutil -setreg Policy\SubjectAltName2 ENABLED; `
 <# Restart Certificate Services#>; `
 Restart-Service -Name "CertSvc"; `
 <# Correcting acl & share - if CertEnroll vDir created remove the vdir from IIS!#>; `
