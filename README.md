@@ -1,4 +1,7 @@
 # AD CS PKI Configuration Scripts
+![PowerShell](https://img.shields.io/badge/PowerShell-%235391FE.svg?style=for-the-badge&logo=powershell&logoColor=white)
+![Windows Server](https://img.shields.io/badge/Windows%20Server-%230078D6.svg?style=for-the-badge&logo=microsoft-wardrobe&logoColor=white)
+![Security](https://img.shields.io/badge/Security-Hardening-red?style=for-the-badge)
 
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
