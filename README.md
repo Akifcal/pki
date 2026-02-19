@@ -10,6 +10,17 @@ This repository contains PowerShell scripts (one-liners) to automate the post-in
 
 ---
 
+## 🛡️ Security & Hardening (Modern Best Practices)
+
+These scripts are written with modern Active Directory Certificate Services (AD CS) security standards in mind, mitigating common misconfigurations and attack vectors:
+
+* **Mitigation of ESC6 (Certified Pre-Owned):** The Issuing CA script explicitly omits the dangerous `EDITF_ATTRIBUTESUBJECTALTNAME2` flag. This prevents unprivileged users from arbitrarily specifying Subject Alternative Names (SANs) in their Certificate Signing Requests (CSRs), effectively blocking a critical privilege escalation path. SANs must be securely built from Active Directory attributes via Certificate Templates.
+* **Audit Trail Readiness:** Sets `AuditFilter 127` to ensure all CA events (success and failure) are logged, providing full visibility for SIEM and security monitoring (requires OS-level audit policies to be enabled).
+* **Cryptographic Strength:** Enables the Discrete Signature Algorithm (PKCS #1 V2.1) for secure PSS padding.
+* **Root CA Isolation:** Completely disables Delta CRL publication on the Root CA, adhering to the strict offline nature of a Root CA.
+
+---
+
 ## 📂 Included Scripts
 
 1.  **Root CA Configuration:** For the offline standalone root server.
@@ -21,23 +32,17 @@ This repository contains PowerShell scripts (one-liners) to automate the post-in
 
 ### 1. Root CA Script
 Designed for a Standalone Offline Root CA.
-* **CRL Validity:** Sets Base CRL to **1 Year** (12 Months) with 42 days overlap.
-* **Delta CRL:** **Disabled** (Best practice for offline Root CAs).
+* **CRL Validity:** Sets Base CRL to **1 Year** (12 Months) with a 42-day overlap.
+* **Delta CRL:** **Disabled** (Best practice).
 * **Validity Period:** Sets issued certificate validity to **10 Years**.
-* **CDP/AIA:** Configures HTTP paths (removes LDAP/File/etc. default noise).
+* **CDP/AIA:** Configures clean HTTP paths (removes LDAP/File/etc. default noise).
 
 ### 2. Issuing CA Script
 Designed for an Enterprise Subordinate CA (Domain Joined).
 * **CRL Validity:** Sets Base CRL to **1 Week**.
 * **Delta CRL:** Enabled and set to **12 Hours**.
-* **Validity Period:** Sets issued certificate validity to **10 Years**.
-* **AD Integration:** Configures the `Configuration Naming Context` in AD.
-* **Sanity Checks:** Enables Subject Alternative Name (SAN) support for FQDNs and Emails.
-
-### Common Features (Both Scripts)
-* **Auditing:** Enables full auditing (Filter 127).
-* **Security:** Enables Discrete Signature Algorithm (PKCS #1 V2.1).
-* **Automation:** Auto-restarts services and publishes the initial CRL.
+* **Validity Period:** Sets absolute maximum issued certificate validity to **10 Years**.
+* **AD Integration:** Configures the `Configuration Naming Context` in Active Directory.
 
 ---
 
@@ -54,7 +59,7 @@ These scripts are formatted as PowerShell one-liners using backticks for easy co
 1.  Run the Issuing CA script on your domain-joined server.
 2.  **Input 1:** Enter the CRL distribution point URL.
 3.  **Input 2:** Enter the AD Naming Context (e.g., `DC=company,DC=local`).
-4.  The script will configure the registry, enable Delta CRLs, and set AD contexts.
+4.  The script will configure the registry, set AD contexts, restart the CA service, and publish the initial CRL.
 
 ---
 
