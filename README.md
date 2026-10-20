@@ -15,12 +15,17 @@ This repository contains PowerShell scripts (one-liners) to automate the post-in
 
 ## 🛡️ Security & Hardening (Modern Best Practices)
 
-These scripts are written with modern Active Directory Certificate Services (AD CS) security standards in mind, mitigating common misconfigurations and attack vectors:
+These scripts are written with modern Active Directory Certificate Services (AD CS) security standards in mind, mitigating common misconfigurations and attack vectors. The Issuing CA script **actively enforces** the secure state instead of relying on defaults, so it also remediates existing CAs with legacy settings.
 
-* **Mitigation of ESC6 (Certified Pre-Owned):** The Issuing CA script explicitly omits the dangerous `EDITF_ATTRIBUTESUBJECTALTNAME2` flag. This prevents unprivileged users from arbitrarily specifying Subject Alternative Names (SANs) in their Certificate Signing Requests (CSRs), effectively blocking a critical privilege escalation path. SANs must be securely built from Active Directory attributes via Certificate Templates.
-* **Audit Trail Readiness:** Sets `AuditFilter 127` to ensure all CA events (success and failure) are logged, providing full visibility for SIEM and security monitoring (requires OS-level audit policies to be enabled).
-* **Cryptographic Strength:** Enables the Discrete Signature Algorithm (PKCS #1 V2.1) for secure PSS padding.
+* **Mitigation of ESC6 (Certified Pre-Owned):** Explicitly removes the dangerous `EDITF_ATTRIBUTESUBJECTALTNAME2` flag. This prevents unprivileged users from arbitrarily specifying Subject Alternative Names (SANs) in their Certificate Signing Requests (CSRs). SANs must be securely built from Active Directory attributes via Certificate Templates.
+* **Mitigation of ESC16:** Ensures the SID security extension (`1.3.6.1.4.1.311.25.2`, KB5014754) is not listed in `DisableExtensionList`, so every issued certificate supports strong certificate mapping on Domain Controllers.
+* **Mitigation of ESC11:** Enforces `IF_ENFORCEENCRYPTICERTREQUEST`, so the CA only accepts encrypted RPC (MS-ICPR) requests. This blocks NTLM relay attacks against the CA's RPC interface.
+* **Audit Trail Readiness:** Sets `AuditFilter 127` and enables the OS audit subcategory *Certification Services* (success and failure) via `auditpol` using its language-independent GUID. Note: a domain GPO with Advanced Audit Policy may override the local setting — include the subcategory there as well.
+* **Cryptographic Strength:** Enables the Discrete Signature Algorithm (PKCS #1 V2.1) for secure PSS padding. Note: some legacy appliances, network devices and older Java stacks cannot validate RSASSA-PSS signatures — verify compatibility before deployment.
 * **Root CA Isolation:** Completely disables Delta CRL publication on the Root CA, adhering to the strict offline nature of a Root CA.
+* **Verification Output:** At the end of the run, the script prints the relevant registry values and audit policy so the hardened state can be verified at a glance.
+
+> **Out of scope:** Template- and ACL-related findings (ESC1–ESC5, ESC7, ESC9/10, ESC13–15) and HTTP enrollment relay (ESC8) are not addressed by these scripts. Assess them with tools such as [Certipy](https://github.com/ly4k/Certipy) or [Locksmith](https://github.com/jakehildreth/Locksmith).
 
 ---
 
