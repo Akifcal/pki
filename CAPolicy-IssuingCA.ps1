@@ -74,6 +74,15 @@ certutil -setreg CA\ValidityPeriod "years"; `
 certutil -setreg CA\ValidityPeriodUnits 10; `
 <# enable Discrete Signature Algorithm (PKCS #1 V2.1) #> ; `
 certutil -setreg CA\CSP\DiscreteSignatureAlgorithm 1; `
+<# Hardening - enforce secure defaults #> ; `
+<# ESC6 - no SAN from request attributes, SAN only via template from AD #> ; `
+certutil -setreg Policy\EditFlags -EDITF_ATTRIBUTESUBJECTALTNAME2; `
+<# ESC16 - SID security extension must not be disabled #> ; `
+certutil -setreg Policy\DisableExtensionList -1.3.6.1.4.1.311.25.2; `
+<# ESC11 - enforce encrypted RPC requests (no NTLM relay to ICPR) #> ; `
+certutil -setreg CA\InterfaceFlags +IF_ENFORCEENCRYPTICERTREQUEST; `
+<# Audit - Certification Services success/failure (GUID = language independent) #> ; `
+auditpol /set /subcategory:"{0CCE9221-69AE-11D9-BED3-505054503030}" /success:enable /failure:enable; `
 <# Restart Certificate Services#>; `
 Restart-Service -Name "CertSvc"; `
 <# Correcting acl & share - if CertEnroll vDir created remove the vdir from IIS!#>; `
