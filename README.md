@@ -9,7 +9,7 @@
 This repository contains PowerShell scripts (one-liners) to automate the post-installation configuration of a Microsoft 2-Tier PKI hierarchy. It includes configurations for both an **Offline Root CA** and an **Enterprise Issuing CA**.
 
 **Author:** Ing. Akif Calhan  
-**Year:** 2025  
+**Year:** 2025–2026  
 **License:** GNU General Public License v3.0 (GPLv3)
 
 ---
@@ -21,12 +21,14 @@ These scripts are written with modern Active Directory Certificate Services (AD 
 * **Mitigation of ESC6 (Certified Pre-Owned):** Explicitly removes the dangerous `EDITF_ATTRIBUTESUBJECTALTNAME2` flag. This prevents unprivileged users from arbitrarily specifying Subject Alternative Names (SANs) in their Certificate Signing Requests (CSRs). SANs must be securely built from Active Directory attributes via Certificate Templates.
 * **Mitigation of ESC16:** Ensures the SID security extension (`1.3.6.1.4.1.311.25.2`, KB5014754) is not listed in `DisableExtensionList`, so every issued certificate supports strong certificate mapping on Domain Controllers.
 * **Mitigation of ESC11:** Enforces `IF_ENFORCEENCRYPTICERTREQUEST`, so the CA only accepts encrypted RPC (MS-ICPR) requests. This blocks NTLM relay attacks against the CA's RPC interface.
-* **Audit Trail Readiness:** Sets `AuditFilter 127` and enables the OS audit subcategory *Certification Services* (success and failure) via `auditpol` using its language-independent GUID. Note: a domain GPO with Advanced Audit Policy may override the local setting — include the subcategory there as well.
+* **Audit Trail Readiness:** Sets `AuditFilter 127` and enables the OS audit subcategory *Certification Services* (success and failure) via `auditpol` using its language-independent GUID. Note: Microsoft Security Baselines (SCT) and other GPOs with Advanced Audit Policy replace the local audit configuration — subcategories not defined in the GPO, including *Certification Services*, are reset to *No Auditing* at every GPO refresh. The verification output checks the GPO-applied policy (`%SystemRoot%\security\audit\audit.csv`) and warns if the subcategory is missing. Recommended fix: a dedicated GPO linked to the CA OU that only sets *Audit Certification Services: Success, Failure*.
 * **Cryptographic Strength:** Enables the Discrete Signature Algorithm (PKCS #1 V2.1) for secure PSS padding. Note: some legacy appliances, network devices and older Java stacks cannot validate RSASSA-PSS signatures — verify compatibility before deployment.
 * **Root CA Isolation:** Completely disables Delta CRL publication on the Root CA, adhering to the strict offline nature of a Root CA.
-* **Verification Output:** At the end of the run, the Issuing CA script prints the relevant registry values and audit policy so the hardened state can be verified at a glance.
+* **Verification Output:** At the end of the run, the Issuing CA script prints the relevant registry values, the effective audit policy and the recent audit policy changes (Event 4719), and **warns if a GPO overrides the audit setting**, so the hardened state can be verified at a glance.
 
 > **Out of scope:** Template- and ACL-related findings (ESC1–ESC5, ESC7, ESC9/10, ESC13–15) and HTTP enrollment relay (ESC8) are not addressed by these scripts. Assess them with tools such as [Certipy](https://github.com/ly4k/Certipy) or [Locksmith](https://github.com/jakehildreth/Locksmith).
+
+> **Related:** For publishing CRLs and AIA certificates to Azure Blob Storage with online verification, see [adcs-crl-azure-blob](https://github.com/Akifcal/adcs-crl-azure-blob).
 
 ---
 
@@ -57,7 +59,7 @@ Designed for an Enterprise Subordinate CA (Domain Joined).
 * **Validity Period:** Sets absolute maximum issued certificate validity to **10 Years**.
 * **AD Integration:** Configures the `Configuration Naming Context` in Active Directory.
 * **Hardening:** Enforces ESC6/ESC11/ESC16 mitigations and enables CA audit logging.
-* **Verification:** Prints the resulting hardening state after the service restart.
+* **Verification:** Prints the resulting hardening state after the service restart and detects GPO-based audit policy overrides.
 
 ---
 
