@@ -28,7 +28,7 @@ These scripts are written with modern Active Directory Certificate Services (AD 
 
 > **Out of scope:** Template- and ACL-related findings (ESC1–ESC5, ESC7, ESC9/10, ESC13–15) and HTTP enrollment relay (ESC8) are not addressed by these scripts. Assess them with tools such as [Certipy](https://github.com/ly4k/Certipy) or [Locksmith](https://github.com/jakehildreth/Locksmith).
 
-> **Related:** For publishing CRLs and AIA certificates to Azure Blob Storage with online verification, see [adcs-crl-azure-blob](https://github.com/Akifcal/adcs-crl-azure-blob).
+> **Related:** For publishing CRLs and AIA certificates to Azure Blob Storage with online verification, see [pki-crl-azure-publisher](https://github.com/Akifcal/pki-crl-azure-publisher).
 
 ---
 
