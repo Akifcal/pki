@@ -1,7 +1,7 @@
-
 <#  ISSUING CA Configuration
 #####################################################
 (c) GPLv3 by Ing. Akif Calhan 2025.07.21
+updated 2026.11.06: verification output incl. GPO audit override check
 CA configuration script in Powershell version
 In Addition to C:\Windows\CAPolicy.inf
 The naming context applies to the individual organizations Active Directory
@@ -12,12 +12,12 @@ write-output "Copyright (C) 2025  Ing. Akif Calhan" ; `
 write-output "" ; `
 write-output "This program is free software; you can redistribute it and/or modify it" ; `
 write-output "under the terms of the GNU General Public License as published by the" ; `
-write-output "Free Software Foundation; either version 3 of the write-output License, or (at" ; `
+write-output "Free Software Foundation; either version 3 of the License, or (at" ; `
 write-output "your option) any later version." ; `
 write-output "" ; `
 write-output "This program is distributed in the hope that it will be useful, but" ; `
 write-output "WITHOUT ANY WARRANTY; without even the implied warranty of" ; `
-write-output "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU write-output" ; `
+write-output "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU" ; `
 write-output "General Public License for more details." ; `
 write-output "" ; `
 write-output "You should have received a copy of the GNU General Public License along" ; `
@@ -90,4 +90,19 @@ certutil -vroot ; `
 Start-Sleep -Seconds 5 ; `
 <# Publish CRL !#>; `
 certutil -crl ; `
-Write-Output "CRL published in $env:WinDir\System32\CertSrv\CertEnroll"
+Write-Output "CRL published in $env:WinDir\System32\CertSrv\CertEnroll" ; `
+<# Verification - hardening state #> ; `
+write-output "" ; `
+write-output "Hardening check:" ; `
+certutil -getreg Policy\EditFlags ; `
+certutil -getreg Policy\DisableExtensionList ; `
+certutil -getreg CA\InterfaceFlags ; `
+certutil -getreg CA\AuditFilter ; `
+auditpol /get /subcategory:"{0CCE9221-69AE-11D9-BED3-505054503030}" ; `
+<# Verification - GPO override of the advanced audit policy #> ; `
+$auditCsv = "$env:SystemRoot\security\audit\audit.csv" ; `
+$auditLine = if (Test-Path $auditCsv) { Select-String -Path $auditCsv -Pattern '0CCE9221-69AE-11D9-BED3-505054503030' } ; `
+if (-not (Test-Path $auditCsv)) { write-output "No GPO Advanced Audit Policy applied - local auditpol setting persists." } elseif ($auditLine) { write-output "GPO Advanced Audit Policy defines Certification Services: $($auditLine.Line)" } else { write-output "WARNING: Advanced Audit Policy is applied by GPO without 'Audit Certification Services' - the local auditpol setting will be reset at the next GPO refresh. Add the subcategory via a GPO linked to the CA OU." } ; `
+write-output "" ; `
+write-output "Audit policy changes for Certification Services (Event 4719, last 10):" ; `
+Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4719} -ErrorAction SilentlyContinue | % { $x=[xml]$_.ToXml(); $d=@{}; $x.Event.EventData.Data | % { $d[$_.Name]=$_.'#text' }; if ($d.SubcategoryId -eq '%%12805') { "$($_.TimeCreated)`t$($d.SubjectUserName)`t$($d.AuditPolicyChanges)" } } | Select-Object -First 10
